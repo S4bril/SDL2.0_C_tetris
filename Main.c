@@ -14,7 +14,6 @@ bool** board_table;
 int score = 0;
 int best_score = 0;
 int falling_timer = 0;
-TTF_Font* font;
 bool quit = false;
 
 #define WINDOW_WIDTH 1920
@@ -149,12 +148,13 @@ void turningObjectRight(t_shape* t_s, i_shape* i_s);
 
 void falling(square* sq, t_shape* t_s, i_shape* i_s);
 
-void RenderText();
+void RenderText(TTF_Font* font);
 void RenderTextTetris();
 
 int main(int argc, char** argv)
 {
-	//Initialize SDL, window, renderer, board, board_table
+	//Initialize SDL, window, renderer, board, board_table. load font
+	TTF_Font* font = TTF_OpenFont("Arial.ttf", 30);
 	if (TTF_Init() < 0)
 	{
 		printf("Error initializing TTF: %s\n", TTF_GetError());
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
 		//draw
 		drawingPrimeSquares(board_, 102, 255, 255);
 		drawBoard(board_);
-		RenderText();
+		RenderText(font);
 
 		//show what was drawn
 		SDL_RenderPresent(renderer);
@@ -390,7 +390,6 @@ void drawBoard(board* board)
 void removingLine()
 {
 	int counter;
-	int i;
 	for (int i = BOARD_TABLE_X; i >= 6; i--)
 	{
 		counter = 0;
@@ -447,7 +446,7 @@ SDL_Rect* initRectangle(int x, int y, int w, int h)
 }
 void initWindow()
 {
-	font = TTF_OpenFont("Arial.ttf", 30);
+	//font = TTF_OpenFont("Arial.ttf", 30);
 	SDL_Init(SDL_INIT_EVERYTHING);
 	window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
 	if (window == NULL) printf("Error in SDL_CreateWindow: %s\n", SDL_GetError());
@@ -455,23 +454,23 @@ void initWindow()
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 }
-void RenderText()
+void RenderText(TTF_Font* font)
 {
 	
 	char numtext[100];
 	char word[] = "Score: ";
-	char asd[100];
+	char num[100];
 	SDL_Rect dest;
 	//TTF_Font* font;
 	SDL_Surface* text;
 	SDL_Texture* texture;
-	SDL_Color xd = { 102, 255, 255 };
+	SDL_Color color = { 102, 255, 255 };
 
 	snprintf(numtext, 10, "%d", score);
-	sprintf(asd, "%s%s", word, numtext);
+	sprintf(num, "%s%s", word, numtext);
 
 	//font = TTF_OpenFont("Arial.ttf", 30);
-	text = TTF_RenderText_Solid(font, asd, xd);
+	text = TTF_RenderText_Solid(font, num, color);
 	texture = SDL_CreateTextureFromSurface(renderer, text);
 	dest.x = 0;
 	dest.y = 0;
@@ -479,6 +478,7 @@ void RenderText()
 
 	SDL_RenderCopy(renderer, texture, NULL, &dest);
 
+	free(font);
 	SDL_FreeSurface(text);
 	SDL_DestroyTexture(texture);
 }
@@ -554,7 +554,7 @@ bool** initBoardTable(int x, int y)
 
 int randInt()
 {
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 	return rand() % 3;
 }
 
@@ -642,10 +642,10 @@ square* initSquare()
 {
 	square* res = (square*)malloc(sizeof(square));
 	res->if_active = false;
-	res->left_top = initRectangle(1, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->right_top = initRectangle(1, 6, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->left_bot = initRectangle(2, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->right_bot = initRectangle(2, 6, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->left_top = (prime_square * )initRectangle(1, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->right_top = (prime_square*)initRectangle(1, 6, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->left_bot = (prime_square*)initRectangle(2, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->right_bot = (prime_square*)initRectangle(2, 6, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
 	return res;
 }
 void spawnSquare(square* square, board* board)
@@ -719,10 +719,10 @@ t_shape* initT_shape()
 {
 	t_shape* res = (t_shape*)malloc(sizeof(t_shape));
 	res->if_active = false;
-	res->middle_top = initRectangle(1, 4, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->left_bot = initRectangle(2, 4, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->middle_bot = initRectangle(2, 3, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->right_bot = initRectangle(2, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->middle_top = (prime_square*)initRectangle(1, 4, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->left_bot = (prime_square*)initRectangle(2, 4, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->middle_bot = (prime_square*)initRectangle(2, 3, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->right_bot = (prime_square*)initRectangle(2, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
 	return res;
 }
 
@@ -951,10 +951,10 @@ i_shape* initI_shape()
 {
 	i_shape* res = (i_shape*)malloc(sizeof(i_shape));
 	res->if_active = false;
-	res->top = initRectangle(1, 4, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->middle_top = initRectangle(1, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->middle_bot = initRectangle(1, 6, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
-	res->bot = initRectangle(1, 7, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->top = (prime_square*)initRectangle(1, 4, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->middle_top = (prime_square*)initRectangle(1, 5, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->middle_bot = (prime_square*)initRectangle(1, 6, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
+	res->bot = (prime_square*)initRectangle(1, 7, SIZE_OF_PRIME_SQUARE, SIZE_OF_PRIME_SQUARE);
 	return res;
 }
 void spawnI_shape(i_shape* i_s, board* board)
@@ -1056,7 +1056,7 @@ void i_shapeTurnLeft(i_shape* i_s)
 			board_table[i_s->middle_top->pos_x][i_s->middle_top->pos_y + 2] == false)
 		{
 			i_s->pos--;
-			i_s->top->pos_x--; i_s->top->pos_y--;
+			i_s->top->pos_x--; i_s->top->pos_y--; 
 
 			i_s->middle_bot->pos_y++; i_s->middle_bot->pos_x++;
 			i_s->bot->pos_x += 2; i_s->bot->pos_y += 2;
